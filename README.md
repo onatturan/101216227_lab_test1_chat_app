@@ -1,5 +1,5 @@
 # 101216227 Lab Test 1 Chat App
-
+![Chatroom Screenshot](images/chatroom-screenshot.png)
 Real-Time Chat Room Application 🚀
 
 Welcome to the Real-Time Chat Room Application, a fully functional chat platform built using modern technologies like Node.js, Socket.IO, and MongoDB. This application provides an interactive space where users can join different chat rooms, send and receive real-time messages, and enjoy a seamless user experience.
