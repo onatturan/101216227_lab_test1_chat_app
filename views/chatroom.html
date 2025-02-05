@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Room</title>
+    <style>
+        #chatContainer {
+            max-width: 600px;
+            margin: 20px auto;
+            display: flex;
+            flex-direction: column;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+            height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        li {
+            margin: 5px 10px;
+            padding: 5px 10px;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+        }
+        input {
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: calc(100% - 20px);
+        }
+        button {
+            padding: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #typingIndicator {
+            color: gray;
+            font-style: italic;
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Chat Room</h1>
+    <div id="chatContainer">
+        <ul id="messages"></ul>
+        <p id="typingIndicator"></p>
+        <input id="messageInput" placeholder="Enter your message..." />
+        <button id="sendButton">Send</button>
+    </div>
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+    <script>
+        const socket = io('http://localhost:3000');
+        const messageInput = document.getElementById('messageInput');
+        const sendButton = document.getElementById('sendButton');
+        const messages = document.getElementById('messages');
+        const typingIndicator = document.getElementById('typingIndicator');
+
+        // Get username and room from localStorage or prompt user
+        const username = localStorage.getItem('username') || prompt('Enter your username:');
+        const room = localStorage.getItem('room') || prompt('Enter the room name:');
+
+        // Save username and room to localStorage
+        localStorage.setItem('username', username);
+        localStorage.setItem('room', room);
+
+        // Join the room
+        socket.emit('joinRoom', room);
+
+        // Send a message
+        sendButton.addEventListener('click', () => {
+            const message = messageInput.value.trim();
+            if (message) {
+                socket.emit('chatMessage', { username, room, message });
+                messageInput.value = '';
+            }
+        });
+
+        // Handle incoming messages
+        socket.on('message', (data) => {
+            const li = document.createElement('li');
+            li.textContent = `${data.username}: ${data.message}`;
+            messages.appendChild(li);
+            messages.scrollTop = messages.scrollHeight; // Auto-scroll
+            typingIndicator.textContent = ''; // Clear typing indicator
+        });
+
+        // Emit "typing" event when user types
+        messageInput.addEventListener('input', () => {
+            socket.emit('typing', { username, room });
+        });
+
+        // Display typing indicator
+        socket.on('typing', (data) => {
+            if (data.username !== username) {
+                typingIndicator.textContent = `${data.username} is typing...`;
+            }
+        });
+
+        // Clear typing indicator when message is sent
+        messageInput.addEventListener('blur', () => {
+            socket.emit('stopTyping', { username, room });
+            typingIndicator.textContent = '';
+        });
+
+        // Handle stop typing event
+        socket.on('stopTyping', (data) => {
+            if (data.username !== username) {
+                typingIndicator.textContent = '';
+            }
+        });
+    </script>
+</body>
+</html>
